@@ -1,0 +1,67 @@
+import java_cup.runtime.*;
+
+// class PascalParser;
+
+/* Terminals and non-terminals */
+
+terminal PLUS, MINUS, TIMES, DIVIDE;    // + - * /
+terminal EQUAL;     // :=
+terminal Integer NUMBER;    // 0-9*
+terminal String IDENTIFIER;     // xyz
+terminal SEMICOLON, COLON, DOT;     // ; : .
+terminal PARENTHESESLEFT, PARENTHESESRIGHT;     // ( )
+
+/* Types of data */
+terminal INTEGER;
+
+/* Special operators from Pascal */
+terminal PROGRAM, VAR, BEGIN, END;
+terminal READ, WRITE;
+
+
+non terminal Object beginning;
+non terminal Object statement;
+non terminal Object declaration_variable;
+non terminal Object read, write;
+non terminal Integer expression, term, factor;
+non terminal String identifier;
+
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+
+/* Grammar rules */
+
+beginning ::= PROGRAM identifier:idprog SEMICOLON beginning:beg {: System.out.println(" TAKE RESULT "); RESULT = beg; :}
+            | VAR beginning:beg {: System.out.println("Recognized VAR "); RESULT = beg; :}
+            | BEGIN beginning:beg END DOT {: System.out.println("Recognized BEGIN END DOT "); RESULT = beg; :}
+            | statement:stm SEMICOLON beginning:beg {: System.out.println(stm + " Results is: "); RESULT = stm + "" + beg; :}
+            | statement:stm {: System.out.println(" STAT = " + stm + "\n"); RESULT = stm; :}
+            ;
+
+statement ::=  statement:stm SEMICOLON {: RESULT = stm; :}
+              | declaration_variable:dv {: System.out.println("Recognized DECLARATION "); RESULT = dv; :}
+              | read:r {: System.out.println("Recognized READ "); RESULT = r; :}
+              | write:w {: System.out.println("Recognized WRITE "); RESULT = w; :}
+              ;
+
+declaration_variable ::= identifier:id EQUAL expression:e {: RESULT = "ldc " + String.valueOf(e) + "\n" + "istore " + "1" + "\n"; :}
+                       | identifier:id COLON INTEGER {: RESULT = ""; :}
+                       ;
+
+expression  ::= expression:e PLUS term:t   {: RESULT = Integer.valueOf(e + t); :}
+              | expression:e MINUS term:t  {: RESULT = Integer.valueOf(e - t); :}
+              | term:t                     {: RESULT = Integer.valueOf(t); :}
+              ;
+
+term        ::= term:t TIMES factor:f   {: RESULT = Integer.valueOf(t * f); :}
+              | term:t DIVIDE factor:f  {: RESULT = Integer.valueOf(t / f); :}
+              | factor:f                {: RESULT = Integer.valueOf(f); :}
+              ;
+
+factor    ::= NUMBER:n {: RESULT = n; :};
+
+identifier  ::= IDENTIFIER:id {: System.out.println("ID: " + id); RESULT = id; :};
+
+read ::= READ PARENTHESESLEFT identifier:id PARENTHESESRIGHT {: RESULT = "new java/util/Scanner\n" + OpCode.dup.name() + "\n" + "getstatic java/lang/System/in Ljava/io/InputStream;\n" + "invokespecial java/util/Scanner/<init>(Ljava/io/InputStream;)V\n" + OpCode.astore.name() + "_" + "3" + "\n" + OpCode.aload.name() + "_" + "3" + "\n" + "invokevirtual java/util/Scanner/nextInt()I\n" + OpCode.istore.name() + "_" + "1"; :};
+
+write ::= WRITE PARENTHESESLEFT identifier:id PARENTHESESRIGHT {: RESULT = "getstatic java/lang/System/out Ljava/io/PrintStream;\niload " + "1" + "\n" + "invokevirtual java/io/PrintStream/println(I)V\n"; :};
