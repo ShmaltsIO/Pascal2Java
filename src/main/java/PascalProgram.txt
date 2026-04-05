@@ -1,0 +1,12 @@
+program Example;
+
+var
+    x: integer;
+    y: integer;
+
+begin
+    x := 256;
+    writeln(x);
+    y := 0;
+    read(y);
+end.
